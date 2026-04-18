@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>HugeToncoinWallet</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0c15;
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        /* Карточка баланса */
+        .balance-card {
+            background: linear-gradient(145deg, #1a1f2e, #0f1222);
+            border-radius: 48px;
+            padding: 32px 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .balance-label {
+            font-size: 13px;
+            letter-spacing: 2px;
+            color: #9ca3af;
+            text-transform: uppercase;
+        }
+
+        .balance-number {
+            font-size: 56px;
+            font-weight: 800;
+            margin: 12px 0;
+            background: linear-gradient(135deg, #fff, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .balance-currency {
+            font-size: 16px;
+            color: #6b7280;
+        }
+
+        .address-chip {
+            background: rgba(59, 130, 246, 0.2);
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 16px;
+            color: #93c5fd;
+        }
+
+        /* Главные кнопки */
+        .main-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 18px;
+            border: none;
+            border-radius: 44px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-deposit {
+            background: linear-gradient(145deg, #10b981, #059669);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-withdraw {
+            background: linear-gradient(145deg, #f59e0b, #d97706);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-refresh {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
+
+        /* Кнопка подключения */
+        .connect-btn {
+            width: 100%;
+            background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+            padding: 16px;
+            border-radius: 44px;
+            margin-bottom: 24px;
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .connect-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Инфо-карточка */
+        .info-card {
+            background: #111827;
+            border-radius: 32px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .status {
+            background: #1e293b;
+            border-radius: 44px;
+            padding: 12px;
+            text-align: center;
+            font-size: 13px;
+            margin-bottom: 24px;
+            color: #4ade80;
+        }
+
+        /* Модальное окно */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border-radius: 48px;
+            padding: 28px;
+            width: 90%;
+            max-width: 360px;
+            border: 1px solid #3b82f6;
+        }
+
+        .close {
+            float: right;
+            font-size: 32px;
+            cursor: pointer;
+            color: #9ca3af;
+            margin-top: -12px;
+        }
+
+        .address-box {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 24px;
+            font-family: monospace;
+            font-size: 11px;
+            word-break: break-all;
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 44px;
+            border: none;
+            margin: 10px 0;
+            font-size: 16px;
+            background: #0f172a;
+            color: white;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 44px;
+            border: none;
+            background: #3b82f6;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 10px;
+            color: #4b5563;
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Баланс пользователя -->
+        <div class="balance-card">
+            <div class="balance-label">ТВОЙ БАЛАНС</div>
+            <div class="balance-number" id="userBalance">0.00</div>
+            <div class="balance-currency">TON</div>
+            <div class="address-chip" id="userAddress">Не подключён</div>
+        </div>
+
+        <!-- Кнопка подключения кошелька -->
+        <button class="connect-btn" id="connectBtn">🔌 Подключить мой кошелёк</button>
+        <div id="connectedStatus" class="status" style="display: none;">✅ Кошелёк подключён</div>
+
+        <!-- Основные кнопки -->
+        <div class="main-buttons">
+            <button class="btn btn-deposit" id="depositBtn">💰 Пополнить</button>
+            <button class="btn btn-withdraw" id="withdrawBtn">💸 Вывести</button>
+            <button class="btn btn-refresh" id="refreshBtn">🔄 Обновить</button>
+        </div>
+
+        <!-- Информация о кошельке бота -->
+        <div class="info-card">
+            <div class="info-row">
+                <span>🏦 Адрес кошелька бота:</span>
+            </div>
+            <div class="info-row">
+                <span id="botAddress" style="font-family: monospace; font-size: 11px; color: #93c5fd;">EQD8Kqz... (пример)</span>
+            </div>
+            <div class="info-row">
+                <span>💰 Баланс бота:</span>
+                <span id="botBalance" style="color: #4ade80;">0.00 TON</span>
+            </div>
+        </div>
+
+        <footer>⚡ Нажми на любую кнопку — появится окно</footer>
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        //  НАСТРОЙКИ (ЗАМЕНИ НА СВОИ ДАННЫЕ)
+        // ============================================
+        // ⚠️ ВСТАВЬ СЮДА АДРЕС ТВОЕГО КОШЕЛЬКА БОТА (из Tonkeeper)
+        const BOT_WALLET_ADDRESS = "UQD0JX2V5lh5GULHAWrbQCN3GxMOikmD99D1hyDRuYIuemyU";
+        
+        // TON Center API ключ (твой)
+        const TONCENTER_API_KEY = "d9393d1516fa6176b7479ecf1bef0ad07033370a4c8356155da65ac5c3638695";
+        // ============================================
+
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        // DOM элементы
+        const userBalanceEl = document.getElementById('userBalance');
+        const userAddressEl = document.getElementById('userAddress');
+        const botAddressEl = document.getElementById('botAddress');
+        const botBalanceEl = document.getElementById('botBalance');
+        const connectBtn = document.getElementById('connectBtn');
+        const depositBtn = document.getElementById('depositBtn');
+        const withdrawBtn = document.getElementById('withdrawBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const connectedStatus = document.getElementById('connectedStatus');
+        const modal = document.getElementById('modal');
+        const modalBody = document.getElementById('modalBody');
+        const closeModalBtn = document.getElementById('closeModal');
+
+        // Состояние пользователя
+        let userWalletAddress = null;
+        let userBalance = 0;
+        let botBalance = 0;
+
+        // ========== 1. ФУНКЦИЯ ПОКАЗА УВЕДОМЛЕНИЙ ==========
+        function showMessage(title, message) {
+            tg.showPopup({
+                title: title,
+                message: message,
+                buttons: [{ type: "ok" }]
+            });
+        }
+
+        // ========== 2. ЗАГРУЗКА БАЛАНСА КОШЕЛЬКА БОТА ==========
+        async function loadBotBalance() {
+            try {
+                const url = `https://toncenter.com/api/v2/getAddressBalance?address=${BOT_WALLET_ADDRESS}&api_key=${TONCENTER_API_KEY}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.ok && data.result !== undefined) {
+                    botBalance = data.result / 1e9;
+                    botBalanceEl.textContent = botBalance.toFixed(4) + " TON";
+                } else {
+                    botBalanceEl.textContent = "Ошибка API";
+                }
+                
+                // Показываем короткий адрес бота
+                const shortAddr = BOT_WALLET_ADDRESS.slice(0, 6) + "..." + BOT_WALLET_ADDRESS.slice(-4);
+                botAddressEl.textContent = shortAddr;
+            } catch (error) {
+                console.error("Ошибка загрузки баланса бота:", error);
+                botBalanceEl.textContent = "Ошибка";
+            }
+        }
+
+        // ========== 3. ЗАГРУЗКА БАЛАНСА ПОЛЬЗОВАТЕЛЯ ==========
+        async function loadUserBalance() {
+            if (!userWalletAddress) return;
+            
+            try {
+                const url = `https://toncenter.com/api/v2/getAddressBalance?address=${userWalletAddress}&api_key=${TONCENTER_API_KEY}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.ok && data.result !== undefined) {
+                    userBalance = data.result / 1e9;
+                    userBalanceEl.textContent = userBalance.toFixed(4);
+                } else {
+                    userBalanceEl.textContent = "0.00";
+                }
+            } catch (error) {
+                console.error("Ошибка загрузки баланса пользователя:", error);
+                userBalanceEl.textContent = "Ошибка";
+            }
+        }
+
+        // ========== 4. ПОДКЛЮЧЕНИЕ КОШЕЛЬКА (УПРОЩЁННОЕ) ==========
+        // Показываем инструкцию, так как TON Connect требует HTTPS и манифест
+        function connectWallet() {
+            showMessage(
+                "🔌 Подключение кошелька",
+                "1. Открой Tonkeeper\n2. Нажми «Подключить» в приложении\n3. Вернись сюда и нажми «Обновить»\n\nАдрес кошелька бота (для пополнения):\n" + BOT_WALLET_ADDRESS
+            );
+            
+            // Симуляция подключения для демонстрации (убёри потом)
+            if (userWalletAddress === null) {
+                userWalletAddress = "EQD" + Math.random().toString(36).substring(2, 15);
+                userAddressEl.textContent = userWalletAddress.slice(0, 6) + "..." + userWalletAddress.slice(-4);
+                connectBtn.style.display = "none";
+                connectedStatus.style.display = "block";
+                loadUserBalance();
+            }
+        }
+
+        // ========== 5. ПОПОЛНЕНИЕ ==========
+        function deposit() {
+            modalBody.innerHTML = `
+                <h3 style="margin-bottom: 16px;">💰 Пополнить кошелёк</h3>
+                <p style="font-size: 14px; margin-bottom: 8px;">Отправьте TON на этот адрес:</p>
+                <div class="address-box">${BOT_WALLET_ADDRESS}</div>
+                <button id="copyAddressBtn" class="submit-btn" style="background: #10b981;">📋 Скопировать адрес</button>
+                <button id="openExplorerBtn" class="submit-btn" style="background: #1e293b; border: 1px solid #3b82f6;">🔍 Открыть в Explorer</button>
+                <p style="font-size: 11px; color: #6b7280; text-align: center; margin-top: 16px;">
+                    После отправки нажмите «Обновить»
+                </p>
+            `;
+            modal.classList.remove("hidden");
+            
+            setTimeout(() => {
+                const copyBtn = document.getElementById("copyAddressBtn");
+                const explorerBtn = document.getElementById("openExplorerBtn");
+                
+                if (copyBtn) {
+                    copyBtn.onclick = () => {
+                        navigator.clipboard.writeText(BOT_WALLET_ADDRESS);
+                        showMessage("✅ Скопировано", "Адрес кошелька бота скопирован");
+                        modal.classList.add("hidden");
+                    };
+                }
+                
+                if (explorerBtn) {
+                    explorerBtn.onclick = () => {
+                        tg.openLink(`https://tonscan.org/address/${BOT_WALLET_ADDRESS}`);
+                        modal.classList.add("hidden");
+                    };
+                }
+            }, 50);
+        }
+
+        // ========== 6. ВЫВОД ==========
+        function withdraw() {
+            modalBody.innerHTML = `
+                <h3 style="margin-bottom: 16px;">💸 Вывод TON</h3>
+                <input type="number" id="withdrawAmount" placeholder="Сумма в TON">
+                <input type="text" id="withdrawAddress" placeholder="Твой TON адрес (куда вывести)">
+                <button id="submitWithdrawBtn" class="submit-btn">📨 Отправить запрос</button>
+                <p style="font-size: 11px; color: #6b7280; text-align: center; margin-top: 16px;">
+                    Доступно для вывода: ${botBalance.toFixed(4)} TON
+                </p>
+            `;
+            modal.classList.remove("hidden");
+            
+            setTimeout(() => {
+                const submitBtn = document.getElementById("submitWithdrawBtn");
+                if (submitBtn) {
+                    submitBtn.onclick = () => {
+                        const amount = document.getElementById("withdrawAmount")?.value;
+                        const address = document.getElementById("withdrawAddress")?.value;
+                        
+                        if (!amount || parseFloat(amount) <= 0) {
+                            showMessage("❌ Ошибка", "Введите корректную сумму");
+                            return;
+                        }
+                        
+                        if (!address || address.length < 10) {
+                            showMessage("❌ Ошибка", "Введите корректный TON адрес");
+                            return;
+                        }
+                        
+                        if (parseFloat(amount) > botBalance) {
+                            showMessage("❌ Ошибка", "Недостаточно средств на кошельке бота");
+                            return;
+                        }
+                        
+                        showMessage(
+                            "✅ Запрос отправлен",
+                            `Сумма: ${amount} TON\nАдрес: ${address.slice(0, 8)}...\n\nАдмин обработает вывод вручную`
+                        );
+                        modal.classList.add("hidden");
+                    };
+                }
+            }, 50);
+        }
+
+        // ========== 7. ОБНОВЛЕНИЕ ВСЕХ ДАННЫХ ==========
+        async function refreshAll() {
+            showMessage("🔄 Обновление", "Загружаем актуальные балансы...");
+            await loadBotBalance();
+            if (userWalletAddress) {
+                await loadUserBalance();
+            }
+            showMessage("✅ Готово", "Балансы обновлены");
+        }
+
+        // ========== 8. ЗАКРЫТИЕ МОДАЛЬНОГО ОКНА ==========
+        closeModalBtn.onclick = () => {
+            modal.classList.add("hidden");
+        };
+        
+        // Клик вне модального окна (по фону) — закрываем
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.classList.add("hidden");
+            }
+        };
+
+        // ========== 9. НАЗНАЧЕНИЕ ОБРАБОТЧИКОВ КНОПОК ==========
+        connectBtn.onclick = connectWallet;
+        depositBtn.onclick = deposit;
+        withdrawBtn.onclick = withdraw;
+        refreshBtn.onclick = refreshAll;
+
+        // ========== 10. ЗАПУСК ПРИ ЗАГРУЗКЕ ==========
+        loadBotBalance();
+        
+        // Автообновление каждые 30 секунд
+        setInterval(() => {
+            loadBotBalance();
+            if (userWalletAddress) loadUserBalance();
+        }, 30000);
+
+        // Настройка внешнего вида Telegram
+        tg.setBackgroundColor("#0a0c15");
+        tg.setHeaderColor("bg_color");
+        
+        console.log("✅ Приложение загружено, все кнопки активны");
+    </script>
+</body>
+</html>
