@@ -138,7 +138,7 @@
             display: flex;
             justify-content: space-between;
             padding: 12px 0;
-            border-bottom: 1px solid #1e293b;
+            border-bottom: 1px solid #1e393b;
         }
 
         .info-row:last-child {
