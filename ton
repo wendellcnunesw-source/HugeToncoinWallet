@@ -452,7 +452,7 @@
                         }
 
                         if (parseFloat(amount) > botBalance) {
-                            showMessage("❌ Ошибка", "Недостаточно средств на кошельке бота");
+                            showMessage(" Ошибка", "Недостаточно средств на кошельке бота");
                             return;
                         }
 
